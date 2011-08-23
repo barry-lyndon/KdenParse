@@ -12,7 +12,7 @@
  Run it.
  $ python kdenparse.py
 
- Yep - this be hackage.
+ Yep - this be hackage. GPLv3 style.
 """
 
 from xml.dom import minidom
