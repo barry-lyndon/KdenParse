@@ -16,6 +16,8 @@
 """
 
 from xml.dom import minidom
+from decimal import Decimal,getcontext,ROUND_DOWN
+from math import modf
 
 class KdenParse:
         
@@ -111,7 +113,10 @@ class KdenParse:
                 progOut = progOut + srcDur
         
                 print "* FROM CLIP NAME: " + fileName
-                print str(EdlEventCnt) + "\t" + prod + " \t" + srcType + "\t" + srcChannel + "\t" + str(srcIn) + "\t" + str(srcOut) + "\t" + str(progIn) + "\t" + str(progOut)
+                print str(EdlEventCnt) + "\t" + prod + " \t",
+                print srcType + "\t" + srcChannel + "\t", 
+                print self.framesToTc(srcIn) + "\t" + self.framesToTc(srcOut) + "\t",
+                print self.framesToTc(progIn) + "\t" + self.framesToTc(progOut)
         
                 if EdlEventCnt == 1:
                     progIn = progIn + 1
@@ -119,6 +124,24 @@ class KdenParse:
                 progIn = progIn + srcDur
                 EdlEventCnt = EdlEventCnt + 1
 
+    def framesToTc(self, frameCount):
+        getcontext().prec = 10
+        getcontext().rounding = ROUND_DOWN
+        projectMeta = self.getProjectProfile()
+        frameRate = Decimal(projectMeta["frame_rate_num"]) / Decimal(projectMeta["frame_rate_den"])
+        frameDuration = 1 / frameRate
+        #print "fps = " + str(frameRate)
+        #print "1 fr = " + str(frameDuration)  + " secs"
+        absDuration = Decimal(frameCount) * Decimal(frameDuration) # total length in seconds
+        #print "TC = " + str(absDuration)
+        f, w = modf(absDuration) # split float at decimal (fraction, whole)
+        #print "Split: " + "%f + %f" % (w, f)
+        frameRemainder = Decimal(str(f)) / Decimal(frameDuration)
+        m, s = divmod(w, 60)
+        h, m = divmod(m, 60)
+        tc = "%d:%02d:%02d:%02d" % (h, m, s, frameRemainder)
+        return tc
+        
 kp = KdenParse('../sample/KdenParse_sample.kdenlive')
 #x.getKProducers()
 kp.createEdl()
