@@ -7,7 +7,7 @@
  
  Usage:
  Set the project file as shown at the bottom of this document.
- kp = KdenParse('/home/dave/project.kdenlive')
+ Something like kp = KdenParse('/home/dave/project.kdenlive').
  
  Run it.
  $ python kdenparse.py
@@ -104,19 +104,20 @@ class KdenParse:
                 # if it's an audio event, extract channel info from producer id
                 if srcType == "A":
                     srcChannel = prodChunks[1]
-                
-                fileName = sourceLinks[prod].split("/")[-1]
+                    
+                # extract filename from full path to file
+                fileName = sourceLinks[prod].split("/")[-1] 
 
-                srcIn = int(event["inTime"])
-                srcOut = int(event["outTime"])
-                srcDur = srcOut - srcIn
-                progOut = progOut + srcDur
+                srcIn = int(event["inTime"]) # source clip IN time
+                srcOut = int(event["outTime"]) # source clip OUT time
+                srcDur = srcOut - srcIn 
+                progOut = progOut + srcDur # increment program tally
         
                 print "* FROM CLIP NAME: " + fileName
-                print str(EdlEventCnt) + "\t" + prod + " \t",
-                print srcType + "\t" + srcChannel + "\t", 
-                print self.framesToTc(srcIn) + "\t" + self.framesToTc(srcOut) + "\t",
-                print self.framesToTc(progIn) + "\t" + self.framesToTc(progOut)
+                print str(EdlEventCnt) + "  " + prod + "  ",
+                print srcType + "  " + srcChannel + "  ", 
+                print self.framesToTc(srcIn) + " " + self.framesToTc(srcOut) + "",
+                print self.framesToTc(progIn) + " " + self.framesToTc(progOut)
         
                 if EdlEventCnt == 1:
                     progIn = progIn + 1
@@ -132,7 +133,7 @@ class KdenParse:
         frameDuration = 1 / frameRate
         #print "fps = " + str(frameRate)
         #print "1 fr = " + str(frameDuration)  + " secs"
-        absDuration = Decimal(frameCount) * Decimal(frameDuration) # total length in seconds
+        absDuration = Decimal(frameCount) * Decimal(frameDuration) # frameCount length in seconds
         #print "TC = " + str(absDuration)
         f, w = modf(absDuration) # split float at decimal (fraction, whole)
         #print "Split: " + "%f + %f" % (w, f)
