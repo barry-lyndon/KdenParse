@@ -11,14 +11,16 @@
  Kdenlive video editing software can be found here:
  http://www.kdenlive.org
 
- Yep - this be hackage. GPLv3 style.
+ Yep - this be hackage.
 """
 import os, sys, argparse
 
-argparser = argparse.ArgumentParser(prog="kdenparse.py", add_help=True,
+argparser = argparse.ArgumentParser(prog="kdenparse.py", 
+    add_help=True,
     description="Parses .kdenlive project files for various metadata and timeline informations.")
-argparser.add_argument('-V', '--version', action='version', version='%(prog)s 0.1.0')
-argparser.add_argument('projectFile')
+argparser.add_argument('-V', '--version', 
+    action='version', 
+    version='%(prog)s 0.1.0')
 argparser.add_argument('--edl', action='store_true', default=False,
     dest='create_edl',
     help='Generate EDL output.')
@@ -28,12 +30,20 @@ argparser.add_argument('--profile', action='store_true', default=False,
 argparser.add_argument('--producers', action='store_true', default=False,
     dest='get_producers',
     help='Show producers (media file) metadata.')
+argparser.add_argument('projectFile')
+
 args = argparser.parse_args()
 
 if not os.path.isfile(args.projectFile):
     print "Not a file we can work with..."
     sys.exit(1)
-    
+
+try: 
+    args.projectFile.rindex(".kdenlive",-9)
+except ValueError:
+    print "Invalid filename. Exiting."
+    sys.exit(1)
+
 from xml.dom import minidom
 from decimal import Decimal,getcontext,ROUND_DOWN
 from math import modf
