@@ -1,20 +1,39 @@
+#!/usr/bin/python
+# Copyright 2011 Will Riley
+# Distributed under the terms of the GNU General Public License v3
+
 """
+ kdenparse.py
+ 
  KdenParse attempts to extract and present useful information 
  from a .kdenlive XML project file.
  
  Kdenlive video editing software can be found here:
  http://www.kdenlive.org
- 
- Usage:
- Set the project file as shown at the bottom of this document.
- Something like kp = KdenParse('/home/dave/project.kdenlive').
- 
- Run it.
- $ python kdenparse.py
 
  Yep - this be hackage. GPLv3 style.
 """
+import os, sys, argparse
 
+argparser = argparse.ArgumentParser(prog="kdenparse.py", add_help=True,
+    description="Parses .kdenlive project files for various metadata and timeline informations.")
+argparser.add_argument('-V', '--version', action='version', version='%(prog)s 0.1.0')
+argparser.add_argument('projectFile')
+argparser.add_argument('--edl', action='store_true', default=False,
+    dest='create_edl',
+    help='Generate EDL output.')
+argparser.add_argument('--profile', action='store_true', default=False,
+    dest='get_profile',
+    help='Generate project profile metadata.')
+argparser.add_argument('--producers', action='store_true', default=False,
+    dest='get_producers',
+    help='Show producers (media file) metadata.')
+args = argparser.parse_args()
+
+if not os.path.isfile(args.projectFile):
+    print "Not a file we can work with..."
+    sys.exit(1)
+    
 from xml.dom import minidom
 from decimal import Decimal,getcontext,ROUND_DOWN
 from math import modf
@@ -72,7 +91,6 @@ class KdenParse:
             pDict["pid"] = p.attributes["id"].value
             pDict["inTime"] = p.attributes["in"].value
             pDict["outTime"] = p.attributes["out"].value
-            
             properties = p.getElementsByTagName("property")
             for props in properties:
                 pDict[props.attributes["name"].value.replace(".","_")] = props.firstChild.data 
@@ -143,6 +161,17 @@ class KdenParse:
         tc = "%d:%02d:%02d:%02d" % (h, m, s, frameRemainder)
         return tc
         
-kp = KdenParse('../sample/KdenParse_sample.kdenlive')
-#x.getKProducers()
-kp.createEdl()
+kp = KdenParse(args.projectFile)
+
+if args.create_edl:
+    kp.createEdl()
+
+if args.get_profile:
+    for i in kp.getProjectProfile().keys():
+        print i + ": " + kp.getProjectProfile()[i]    
+
+if args.get_producers:
+    for i in kp.getProducers():
+        print "\n=================\n"
+        for kv in i:
+            print kv + ": " + i[kv]
