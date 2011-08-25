@@ -24,12 +24,21 @@ argparser.add_argument('-V', '--version',
 argparser.add_argument('--edl', action='store_true', default=False,
     dest='create_edl',
     help='Generate EDL output.')
+argparser.add_argument('--frames', action='store_true', default=False,
+    dest='show_frames',
+    help='Show frames instead of TC when using --edl.')
+argparser.add_argument('--links', action='store_true', default=False,
+    dest='show_links',
+    help='Show source id to filename association.')
 argparser.add_argument('--profile', action='store_true', default=False,
     dest='get_profile',
     help='Generate project profile metadata.')
 argparser.add_argument('--producers', action='store_true', default=False,
     dest='get_producers',
-    help='Show producers (media file) metadata.')
+    help='Show MLT producers (media file) metadata.')
+argparser.add_argument('--kproducers', action='store_true', default=False,
+    dest='get_kproducers',
+    help='Show Kdenlive producers (media file) metadata.')
 argparser.add_argument('projectFile')
 
 args = argparser.parse_args()
@@ -87,12 +96,17 @@ class KdenParse:
         return playlistList
     
     def getKProducers(self):
+        kProducerList = []
         profile = self.xmldoc.getElementsByTagName("kdenlive_producer")
         for i in profile:
+            kpDict = {}
             keyList = i.attributes.keys()
             for a in keyList:
-                print i.attributes[a].name + ": " + i.attributes[a].value
-
+                kpDict[i.attributes[a].name] = i.attributes[a].value
+            
+            kProducerList.append(kpDict)
+        return kProducerList
+    
     def getProducers(self):
         producerList = []
         producers = self.xmldoc.getElementsByTagName("producer")
@@ -144,8 +158,13 @@ class KdenParse:
                 print "* FROM CLIP NAME: " + fileName
                 print str(EdlEventCnt) + "  " + prod + "  ",
                 print srcType + "  " + srcChannel + "  ", 
-                print self.framesToTc(srcIn) + " " + self.framesToTc(srcOut) + "",
-                print self.framesToTc(progIn) + " " + self.framesToTc(progOut)
+                
+                if args.show_frames:
+                    print str(srcIn) + " " + str(srcOut) + "",
+                    print str(progIn) + " " + str(progOut)
+                else:
+                    print self.framesToTc(srcIn) + " " + self.framesToTc(srcOut) + "",
+                    print self.framesToTc(progIn) + " " + self.framesToTc(progOut)
         
                 if EdlEventCnt == 1:
                     progIn = progIn + 1
@@ -185,3 +204,14 @@ if args.get_producers:
         print "\n=================\n"
         for kv in i:
             print kv + ": " + i[kv]
+
+if args.get_kproducers:
+    for i in kp.getKProducers():
+        print "\n=================\n"
+        for kv in i:
+            print kv + ": " + i[kv]
+        
+if args.show_links:
+    for i in kp.linkReferences():
+        print i + ": " + kp.linkReferences()[i]
+
