@@ -24,6 +24,9 @@ argparser.add_argument('-V', '--version',
 argparser.add_argument('--edl', action='store_true', default=False,
     dest='create_edl',
     help='Generate EDL output.')
+argparser.add_argument('--deref-proxy', action='store_true', default=False,
+    dest='deref_proxy',
+    help='Dereference proxy clip (show original filenames)')
 argparser.add_argument('--frames', action='store_true', default=False,
     dest='show_frames',
     help='Show frames instead of TC when using --edl.')
@@ -103,7 +106,6 @@ class KdenParse:
             keyList = i.attributes.keys()
             for a in keyList:
                 kpDict[i.attributes[a].name] = i.attributes[a].value
-            
             kProducerList.append(kpDict)
         return kProducerList
     
@@ -126,9 +128,19 @@ class KdenParse:
         sourceLinks = {}
         for i in self.getProducers():
             srcPid = i["pid"]
-            srcFile = i["resource"]
-            sourceLinks[srcPid] = srcFile
+            sourceLinks[srcPid] = i["resource"]
         return sourceLinks
+    
+    def derefProxy(self):
+        proxyLinks = {}
+        for i in self.getKProducers():
+            try:
+                if i["proxy"]:
+                    _proxy = i["proxy"]
+                    proxyLinks[_proxy] = i["resource"]
+            except KeyError:
+                return False
+        return proxyLinks
     
     def createEdl(self):
         sourceLinks = self.linkReferences()
@@ -146,15 +158,23 @@ class KdenParse:
                 # if it's an audio event, extract channel info from producer id
                 if srcType == "A":
                     srcChannel = prodChunks[1]
-                    
-                # extract filename from full path to file
-                fileName = sourceLinks[prod].split("/")[-1] 
 
                 srcIn = int(event["inTime"]) # source clip IN time
                 srcOut = int(event["outTime"]) # source clip OUT time
                 srcDur = srcOut - srcIn 
                 progOut = progOut + srcDur # increment program tally
-        
+                
+                sourceFile = sourceLinks[prod]
+                proxyList = self.derefProxy()
+                if proxyList:
+                    try:
+                        fileName = "(" + proxyList[sourceFile].split("/")[-1] + ") " + sourceFile.split("/")[-1]  
+                    except KeyError:
+                        fileName = sourceFile.split("/")[-1] 
+                else:
+                    # extract filename from full path to file
+                    fileName = sourceFile.split("/")[-1] 
+                
                 print "* FROM CLIP NAME: " + fileName
                 print str(EdlEventCnt) + "  " + prod + "  ",
                 print srcType + "  " + srcChannel + "  ", 
@@ -210,6 +230,10 @@ if args.get_kproducers:
         print "\n=================\n"
         for kv in i:
             print kv + ": " + i[kv]
+        
+if args.deref_proxy:
+    for i in kp.derefProxy():
+        print i + ": " + kp.derefProxy()[i]
         
 if args.show_links:
     for i in kp.linkReferences():
