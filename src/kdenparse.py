@@ -249,7 +249,7 @@ class KdenParse:
         minutes = floor(floor(framenumber / frRound) / 60) % 60;
         hours = floor(floor(floor(framenumber / frRound) / 60) / 60);    
 
-        tc = "%d:%02d:%02d:%02d" % (hours, minutes, seconds, frames)
+        tc = "%d:%02d:%02d;%02d" % (hours, minutes, seconds, frames)
         return tc
     
 kp = KdenParse(args.projectFile)
