@@ -58,7 +58,7 @@ except ValueError:
 
 from xml.dom import minidom
 from decimal import Decimal,getcontext,ROUND_DOWN
-from math import modf
+from math import modf, floor
 
 class KdenParse:
         
@@ -185,8 +185,8 @@ class KdenParse:
                     print str(srcIn) + " " + str(srcOut) + "",
                     print str(progIn) + " " + str(progOut)
                 else:
-                    print self.framesToTc(srcIn) + " " + self.framesToTc(srcOut) + "",
-                    print self.framesToTc(progIn) + " " + self.framesToTc(progOut)
+                    print self.framesToDF(srcIn) + " " + self.framesToDF(srcOut) + "",
+                    print self.framesToDF(progIn) + " " + self.framesToDF(progOut)
         
                 if EdlEventCnt == 1:
                     progIn = progIn + 1
@@ -194,7 +194,7 @@ class KdenParse:
                 progIn = progIn + srcDur
                 EdlEventCnt = EdlEventCnt + 1
 
-    def framesToTc(self, frameCount):
+    def framesToABS(self, frameAddress):
         getcontext().prec = 10
         getcontext().rounding = ROUND_DOWN
         projectMeta = self.getProjectProfile()
@@ -202,7 +202,7 @@ class KdenParse:
         frameDuration = 1 / frameRate
         #print "fps = " + str(frameRate)
         #print "1 fr = " + str(frameDuration)  + " secs"
-        absDuration = Decimal(frameCount) * Decimal(frameDuration) # frameCount length in seconds
+        absDuration = Decimal(frameAddress) * Decimal(frameDuration) # frameAddress length in seconds
         #print "TC = " + str(absDuration)
         f, w = modf(absDuration) # split float at decimal (fraction, whole)
         #print "Split: " + "%f + %f" % (w, f)
@@ -212,6 +212,46 @@ class KdenParse:
         tc = "%d:%02d:%02d:%02d" % (h, m, s, frameRemainder)
         return tc
         
+    def framesToDF(self, framenumber):
+        """
+            This method adapted from C++ code called "timecode" by Jason Wood.
+            begin: Wed Dec 17 2003
+            copyright: (C) 2003 by Jason Wood
+            email: jasonwood@blueyonder.co.uk
+            Copyright (C) 2010 by Jean-Baptiste Mardelle (jb@kdenlive.org)  
+        """
+
+        projectMeta = self.getProjectProfile()
+        framerate = float(projectMeta["frame_rate_num"]) / float(projectMeta["frame_rate_den"])
+        dropFrames = round(framerate * 0.066666) #Number of frames to drop on the minute marks is the nearest integer to 6% of the framerate
+        framesPerHour = round(framerate * 60 * 60) #Number of frames in an hour
+        framesPer24Hours = framesPerHour * 24 #Number of frames in a day - timecode rolls over after 24 hours
+        framesPer10Minutes = round(framerate * 60 * 10) #Number of frames per ten minutes
+        framesPerMinute = (round(framerate) * 60) - dropFrames #Number of frames per minute is the round of the framerate * 60 minus the number of dropped frames
+
+        if (framenumber < 0): #Negative time. Add 24 hours.
+            framenumber = framesPer24Hours + framenumber
+
+        #If framenumber is greater than 24 hrs, next operation will rollover clock
+        framenumber = framenumber % framesPer24Hours #% is the modulus operator, which returns a remainder. a % b = the remainder of a/b
+
+        d = floor(framenumber / framesPer10Minutes) # \ means integer division, which is a/b without a remainder. Some languages you could use floor(a/b)
+        m = framenumber % framesPer10Minutes
+
+        if (m > 1):
+            framenumber=framenumber + (dropFrames * 9 * d) + dropFrames * floor((m-dropFrames) / framesPerMinute)
+        else:
+            framenumber = framenumber + dropFrames * 9 * d;
+
+        frRound = round(framerate);
+        frames = framenumber % frRound;
+        seconds = floor(framenumber / frRound) % 60;
+        minutes = floor(floor(framenumber / frRound) / 60) % 60;
+        hours = floor(floor(floor(framenumber / frRound) / 60) / 60);    
+
+        tc = "%d:%02d:%02d:%02d" % (hours, minutes, seconds, frames)
+        return tc
+    
 kp = KdenParse(args.projectFile)
 
 if args.create_edl:
