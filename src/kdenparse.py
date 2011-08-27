@@ -161,6 +161,8 @@ class KdenParse:
 
                 srcIn = int(event["inTime"]) # source clip IN time
                 srcOut = int(event["outTime"]) # source clip OUT time
+                if EdlEventCnt != 1:
+                    srcOut = srcOut + 1
                 srcDur = srcOut - srcIn 
                 progOut = progOut + srcDur # increment program tally
                 
