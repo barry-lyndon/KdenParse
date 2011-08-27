@@ -217,23 +217,28 @@ class KdenParse:
             This method adapted from C++ code called "timecode" by Jason Wood.
             begin: Wed Dec 17 2003
             copyright: (C) 2003 by Jason Wood
-            email: jasonwood@blueyonder.co.uk
-            Copyright (C) 2010 by Jean-Baptiste Mardelle (jb@kdenlive.org)  
+            email: jasonwood@blueyonder.co.uk 
         """
 
         projectMeta = self.getProjectProfile()
         framerate = float(projectMeta["frame_rate_num"]) / float(projectMeta["frame_rate_den"])
-        dropFrames = round(framerate * 0.066666) #Number of frames to drop on the minute marks is the nearest integer to 6% of the framerate
-        framesPerHour = round(framerate * 60 * 60) #Number of frames in an hour
-        framesPer24Hours = framesPerHour * 24 #Number of frames in a day - timecode rolls over after 24 hours
-        framesPer10Minutes = round(framerate * 60 * 10) #Number of frames per ten minutes
-        framesPerMinute = (round(framerate) * 60) - dropFrames #Number of frames per minute is the round of the framerate * 60 minus the number of dropped frames
-
+        
+        #Number of frames to drop on the minute marks is the nearest integer to 6% of the framerate
+        dropFrames = round(framerate * 0.066666) 
+        #Number of frames in an hour
+        framesPerHour = round(framerate * 60 * 60) 
+        #Number of frames in a day - timecode rolls over after 24 hours
+        framesPerDay = framesPerHour * 24 
+        #Number of frames per ten minutes
+        framesPer10Minutes = round(framerate * 60 * 10) 
+        #Number of frames per minute is the round of the framerate * 60 minus the number of dropped frames
+        framesPerMinute = (round(framerate) * 60) - dropFrames 
+        
         if (framenumber < 0): #Negative time. Add 24 hours.
-            framenumber = framesPer24Hours + framenumber
+            framenumber = framesPerDay + framenumber
 
         #If framenumber is greater than 24 hrs, next operation will rollover clock
-        framenumber = framenumber % framesPer24Hours #% is the modulus operator, which returns a remainder. a % b = the remainder of a/b
+        framenumber = framenumber % framesPerDay #% is the modulus operator, which returns a remainder. a % b = the remainder of a/b
 
         d = floor(framenumber / framesPer10Minutes) # \ means integer division, which is a/b without a remainder. Some languages you could use floor(a/b)
         m = framenumber % framesPer10Minutes
