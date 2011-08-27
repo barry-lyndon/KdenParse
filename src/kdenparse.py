@@ -11,7 +11,6 @@
  Kdenlive video editing software can be found here:
  http://www.kdenlive.org
 
- Yep - this be hackage.
 """
 import os, sys, argparse
 
@@ -166,18 +165,18 @@ class KdenParse:
                 srcDur = srcOut - srcIn 
                 progOut = progOut + srcDur # increment program tally
                 
-                sourceFile = sourceLinks[prod]
+                sourcePath = sourceLinks[prod]
+                sourceFile = sourcePath.split("/")[-1]
                 proxyList = self.derefProxy()
                 if proxyList:
                     try:
-                        fileName = "(" + proxyList[sourceFile].split("/")[-1] + ") " + sourceFile.split("/")[-1]  
+                        sourceRef = "(" + proxyList[sourcePath].split("/")[-1] + ") " + sourceFile  
                     except KeyError:
-                        fileName = sourceFile.split("/")[-1] 
+                        sourceRef = sourceFile
                 else:
-                    # extract filename from full path to file
-                    fileName = sourceFile.split("/")[-1] 
+                    sourceRef = sourceFile 
                 
-                print "* FROM CLIP NAME: " + fileName
+                print "* FROM CLIP NAME: " + sourceRef
                 print str(EdlEventCnt) + "  " + prod + "  ",
                 print srcType + "  " + srcChannel + "  ", 
                 
@@ -218,29 +217,31 @@ class KdenParse:
             begin: Wed Dec 17 2003
             copyright: (C) 2003 by Jason Wood
             email: jasonwood@blueyonder.co.uk 
+            Framerate should be 29.97, 59.94, or 23.976, otherwise the calculations will be off.
         """
 
         projectMeta = self.getProjectProfile()
         framerate = float(projectMeta["frame_rate_num"]) / float(projectMeta["frame_rate_den"])
         
-        #Number of frames to drop on the minute marks is the nearest integer to 6% of the framerate
+        # Number of frames to drop on the minute marks is the nearest integer to 6% of the framerate
         dropFrames = round(framerate * 0.066666) 
-        #Number of frames in an hour
+        # Number of frames in an hour
         framesPerHour = round(framerate * 60 * 60) 
-        #Number of frames in a day - timecode rolls over after 24 hours
+        # Number of frames in a day - timecode rolls over after 24 hours
         framesPerDay = framesPerHour * 24 
-        #Number of frames per ten minutes
+        # Number of frames per ten minutes
         framesPer10Minutes = round(framerate * 60 * 10) 
-        #Number of frames per minute is the round of the framerate * 60 minus the number of dropped frames
+        # Number of frames per minute is the round of the framerate * 60 minus the number of dropped frames
         framesPerMinute = (round(framerate) * 60) - dropFrames 
         
-        if (framenumber < 0): #Negative time. Add 24 hours.
+        if (framenumber < 0): # For negative time, add 24 hours.
             framenumber = framesPerDay + framenumber
 
-        #If framenumber is greater than 24 hrs, next operation will rollover clock
-        framenumber = framenumber % framesPerDay #% is the modulus operator, which returns a remainder. a % b = the remainder of a/b
+        # If framenumber is greater than 24 hrs, next operation will rollover clock
+        # % is the modulus operator, which returns a remainder. a % b = the remainder of a/b
 
-        d = floor(framenumber / framesPer10Minutes) # \ means integer division, which is a/b without a remainder. Some languages you could use floor(a/b)
+        framenumber = framenumber % framesPerDay 
+        d = floor(framenumber / framesPer10Minutes)
         m = framenumber % framesPer10Minutes
 
         if (m > 1):
@@ -256,6 +257,9 @@ class KdenParse:
 
         tc = "%d:%02d:%02d;%02d" % (hours, minutes, seconds, frames)
         return tc
+
+    def framesToNDF(self):
+        pass
     
 kp = KdenParse(args.projectFile)
 
