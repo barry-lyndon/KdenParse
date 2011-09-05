@@ -14,12 +14,14 @@
 """
 import os, sys, argparse
 
+version_ = "%(prog)s 0.1.0"
+
 argparser = argparse.ArgumentParser(prog="kdenparse.py", 
     add_help=True,
     description="Parses .kdenlive project files for various metadata and timeline informations.")
 argparser.add_argument('-V', '--version', 
     action='version', 
-    version='%(prog)s 0.1.0')
+    version=version_)
 argparser.add_argument('--edl', action='store_true', default=False,
     dest='create_edl',
     help='Generate EDL output.')
@@ -77,7 +79,7 @@ class KdenParse:
         t = self.xmldoc.getElementsByTagName("track")
         for track in t:
             tracks.append(track.attributes["producer"].value) 
-        return tracks
+        return tuple(tracks)
     
     def getPlaylists(self):
         playlistList = []
@@ -95,7 +97,7 @@ class KdenParse:
                 eventList.append(evDict)
             plDict["events"] = eventList
             playlistList.append(plDict)
-        return playlistList
+        return tuple(playlistList)
     
     def getKProducers(self):
         kProducerList = []
@@ -106,7 +108,7 @@ class KdenParse:
             for a in keyList:
                 kpDict[i.attributes[a].name] = i.attributes[a].value
             kProducerList.append(kpDict)
-        return kProducerList
+        return tuple(kProducerList)
     
     def getProducers(self):
         producerList = []
@@ -121,7 +123,7 @@ class KdenParse:
                 pDict[props.attributes["name"].value.replace(".","_")] = props.firstChild.data 
                 
             producerList.append(pDict)
-        return producerList
+        return tuple(producerList)
     
     def linkReferences(self):
         sourceLinks = {}
