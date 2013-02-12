@@ -1,13 +1,15 @@
 KdenParse
 =========
 
-Kdenlive xml file processor
+Kdenlive xml project-file parser.
+Created to help me migrate a project from Kdenlive to Premier, perhaps it's useful to someone 
+in a similar situation.
 
-Sample output command:
+Example usage:
 
-    $ python ./kdenparse.py --edl samplefile.kdenlive 
+    $ python ./kdenparse.py --edl yourproject.kdenlive 
 
-It's in a quasi-CMX3600 format. Edit-point (location) units are H:M:S:fr.
+Output is in quasi-CMX3600 format. Edit-point (location) units are H:M:S:fr.
 
     * FROM CLIP NAME: <source file name>
     <index> <source id> <Audio/Video> <channel> <src in> <src out> <showtime in> <showtime out>
